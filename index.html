@@ -16,15 +16,18 @@
 
         <h1>Purchase contract</h1>
 
-        <h2 id="instructor"></h2>
+        <h2 id="Item X">Item X</h2>
 
-        <label for="name" class="col-lg-2 control-label">Instructor Name</label>
-        <input id="name" type="text">
+        <div id=price>Price: 0 Wei</div>
 
-        <label for="name" class="col-lg-2 control-label">Instructor Age</label>
-        <input id="age" type="text">
+        <label for="name" class="col-lg-2 control-label">Amount</label>
+        <input id="amount" type="text" value="400">
 
-        <button id="button">Make purchase</button>
+        <!-- <label for="name" class="col-lg-2 control-label">Confirm Item Received</label>
+        <input id="confirmItemReceived" type="text"> -->
+
+        <button id="buyProduct">Buy Product</button>
+        <button id="confirmReceived">ConfirmReceivedItem</button>
 
 
     </div>
@@ -32,6 +35,9 @@
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
 
     <script>
+
+      const contract_addr = "0x39a862966fc46c9cd250523609d482C1A68B8245";
+      const buyer_addr = "0xeA3020F1256C969fd23421947492A2f738356155";
       if (typeof web3 !== 'undefined') {
           web3 = new Web3(web3.currentProvider);
       } else {
@@ -189,14 +195,39 @@
         }
       ];
 
-      var PurchaseContract = new web3.eth.Contract(ABI, '0xF3D3CA4c2FeD6846DFd0fa1239319822B4C52D31', {});
-      web3.eth.defaultAccount = web3.eth.accounts[1];
+      var PurchaseContract = new web3.eth.Contract(ABI, contract_addr, {});
+      web3.eth.defaultAccount = "0xeA3020F1256C969fd23421947492A2f738356155";
      
       // var Purchase = PurchaseContract.at('0x5B38Da6a701c568545dCfcB03FcB875f56beddC4');
       console.log(PurchaseContract);
 
-      PurchaseContract.methods.buyProduct().send({from: web3.eth.accounts[1], gas: 3000000, value: 1000000000000000}, function(err, res){});
+
+      function getBuyerBalance() {
+        $.when(web3.eth.getBalance(buyer_addr)).done(function (balance) {
+          console.log("Buyer account balance: ", balance);
+        });
+      }
+
+      // TODO: pobieranie i wyświetlanie ceny za produkt
+
+      getBuyerBalance();
+
+      // PurchaseContract.methods.buyProduct().send({from: buyer_addr, gas: 3000000, value: 400}, function(err, res){console.log(res);console.log(err);});
       
+      // PurchaseContract.methods.confirmReceivedItem().call()
+
+      
+      // when buyProduct clicked
+      $("#buyProduct").click(function() {        
+        PurchaseContract.methods.buyProduct().send({from: buyer_addr, gas: 3000000, value: $("#amount").val()}, function(err, res){console.log(res);});
+        getBuyerBalance();
+      });
+
+      $("#confirmReceived").click(function() {
+        PurchaseContract.methods.confirmReceivedItem().send({from: buyer_addr});
+        getBuyerBalance();
+      });
+
    </script>
 
 </body>
