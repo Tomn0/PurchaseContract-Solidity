@@ -14,21 +14,35 @@
 <body>
     <div class="container">
 
-        <h1>Purchase contract</h1>
+        <div class="buyer">
+          <div class="centered">
+            <h1>Purchase contract</h1>
 
-        <h2 id="Item X">Item X</h2>
-
-        <div id=price>Price: 0 Wei</div>
-
-        <label for="name" class="col-lg-2 control-label">Amount</label>
-        <input id="amount" type="text" value="400">
-
-        <!-- <label for="name" class="col-lg-2 control-label">Confirm Item Received</label>
-        <input id="confirmItemReceived" type="text"> -->
-
-        <button id="buyProduct">Buy Product</button>
-        <button id="confirmReceived">ConfirmReceivedItem</button>
-
+            <h2 id="Item X">Item X</h2>
+            
+            <div id=price>Price: 0 Wei</div>
+            <!-- <button id="getPrice">Get price</button> -->
+            
+            <h2 id="Item X">Buyer</h2>
+            <div id=buyer_balance>Account balance: 0 Wei</div>
+            <label for="name" class="col-lg-2 control-label">Amount</label>
+            <input id="amount" type="text" value="400">
+    
+            <!-- <label for="name" class="col-lg-2 control-label">Confirm Item Received</label>
+            <input id="confirmItemReceived" type="text"> -->
+    
+            <button id="buyProduct">Buy Product</button>
+            <button id="confirmReceived">ConfirmReceivedItem</button>
+          </div>
+        </div>
+        
+        <div class="seller">
+          <div class="centered">
+            <h2>Seller</h2>
+            <div id=seller_balance>Account balance: 0 Wei</div>
+            <button id="abort">Abort</button>
+          </div>
+        </div>
 
     </div>
 
@@ -36,8 +50,9 @@
 
     <script>
 
-      const contract_addr = "0x39a862966fc46c9cd250523609d482C1A68B8245";
-      const buyer_addr = "0xeA3020F1256C969fd23421947492A2f738356155";
+      const contract_addr = "0x3153CC151254661A800bAC4027dbF88Ab9749395";
+      const seller_addr = "0x986419430052307adF2eEB5F98D0EffaE1e7011C";
+      const buyer_addr = "0xAF757A6689F4808bf8AdFEF64a4B2B4d374dB168";
       if (typeof web3 !== 'undefined') {
           web3 = new Web3(web3.currentProvider);
       } else {
@@ -96,19 +111,6 @@
         },
         {
           "inputs": [],
-          "name": "chainStartTime",
-          "outputs": [
-            {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [],
           "name": "confirmPurchaseCancellation",
           "outputs": [],
           "stateMutability": "nonpayable",
@@ -119,19 +121,6 @@
           "name": "confirmReceivedItem",
           "outputs": [],
           "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [],
-          "name": "itemReceivedTime",
-          "outputs": [
-            {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-            }
-          ],
-          "stateMutability": "view",
           "type": "function"
         },
         {
@@ -196,7 +185,7 @@
       ];
 
       var PurchaseContract = new web3.eth.Contract(ABI, contract_addr, {});
-      web3.eth.defaultAccount = "0xeA3020F1256C969fd23421947492A2f738356155";
+      web3.eth.defaultAccount = buyer_addr;
      
       // var Purchase = PurchaseContract.at('0x5B38Da6a701c568545dCfcB03FcB875f56beddC4');
       console.log(PurchaseContract);
@@ -204,13 +193,38 @@
 
       function getBuyerBalance() {
         $.when(web3.eth.getBalance(buyer_addr)).done(function (balance) {
-          console.log("Buyer account balance: ", balance);
+          // console.log("Buyer account balance: ", balance);
+          $( "#buyer_balance" ).text("Account balance: : " + balance + " Wei");
         });
       }
 
-      // TODO: pobieranie i wyświetlanie ceny za produkt
+      function getSellerBalance() {
+        $.when(web3.eth.getBalance(seller_addr)).done(function (balance) {
+          // console.log("Seller account balance: ", balance);
+          $( "#seller_balance" ).text("Account balance: : " + balance + " Wei");
+        });
+      } 
+
+      function getItemPrice() {
+        $.when(PurchaseContract.methods.price.call().call()).done(function (new_price) {
+          $( "#price" ).text("Price: " + new_price + " Wei");
+        });
+      }
 
       getBuyerBalance();
+      setInterval(function(){
+        getBuyerBalance() // this will run after every 5 seconds
+      }, 2000);
+      getSellerBalance();
+      setInterval(function(){
+        getSellerBalance() // this will run after every 5 seconds
+      }, 2000);
+      getItemPrice();
+      setInterval(function(){
+        getItemPrice() // this will run after every 5 seconds
+      }, 2000);
+
+      // TODO: help https://bitsofco.de/calling-smart-contract-functions-using-web3-js-call-vs-send/ 
 
       // PurchaseContract.methods.buyProduct().send({from: buyer_addr, gas: 3000000, value: 400}, function(err, res){console.log(res);console.log(err);});
       
@@ -220,14 +234,18 @@
       // when buyProduct clicked
       $("#buyProduct").click(function() {        
         PurchaseContract.methods.buyProduct().send({from: buyer_addr, gas: 3000000, value: $("#amount").val()}, function(err, res){console.log(res);});
-        getBuyerBalance();
+        // getBuyerBalance();
       });
 
       $("#confirmReceived").click(function() {
         PurchaseContract.methods.confirmReceivedItem().send({from: buyer_addr});
-        getBuyerBalance();
+        // getBuyerBalance();
       });
 
+      $("#abort").click(function() {
+        PurchaseContract.methods.abort().send({from: seller_addr});
+        // getBuyerBalance();
+      });
    </script>
 
 </body>
